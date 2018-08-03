@@ -1,0 +1,187 @@
+﻿<!-- ko with: home -->
+<div class="row">
+    <div ng-app="app" ng-cloak>
+        <div id="movieCtrl" ng-controller="MovieController as vm">
+            <div class="row">
+                <div class="col-md-12 panel panel-default" style="padding:10px">
+                    <div class="panel panel-heading">
+                        <div class="row">
+                            <div class="col-xs-3">
+                                <button class="btn btn-primary" id="btnGetMovies" ng-click="vm.click()" ng-disabled="!vm.isIdle" style="margin-top: 15px;">Find Movies</button>
+                            </div>
+                            <div class="col-xs-4">
+                                <input type="text" id="searchText" class="form-control" style="margin-top: 15px;" ng-model="vm.searchInput" placeholder="Search Movie By Title or Year" />
+                            </div>
+                            <div class="col-xs-5">
+                                <label class="alert alert-info h5" ng-class="{'collapse': vm.message.length === 0}">{{ vm.message.join(", ") }}</label>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="panel panel-body">
+                        <div class="row">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        @*<th>ID</th>*@
+                                        <th class="col-xs-4">Poster</th>
+                                        <th class="col-xs-6"><a href="#" ng-click="vm.sortTable('Title')">Title <span ng-show="vm.sortBy=='Title'" class="glyphicon" ng-class="{ 'glyphicon-sort-by-alphabet': !vm.sortReverse, 'glyphicon-sort-by-alphabet-alt': vm.sortReverse }" /></a></th>
+                                        <th class="col-xs-1"><a href="#" ng-click="vm.sortTable('Year')">Year <span ng-show="vm.sortBy=='Year'" class="glyphicon" ng-class="{ 'glyphicon-sort-by-order': !vm.sortReverse, 'glyphicon-sort-by-order-alt': vm.sortReverse }" /></a></th>
+                                        <th class="col-xs-1">Type</th>
+                                        @*<th style="width:18px"></th>*@
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="row div-table-content">
+                            <table class="table table-bordered table-striped" id="tblCalcRet">
+                                <tbody>
+                                    <tr ng-repeat="(x,y) in vm.collections | orderObjectBy: vm.sortBy : vm.sortReverse | filter: !!vm.searchInput && vm.searchFilter()">
+                                        @*<td>{{ x.ID }}</td>*@
+                                        <td class="col-xs-4">
+                                            <div>
+                                                <img id="{{ y.ID }}" name="{{ sub.ID }}" ng-repeat="sub in y.Subs" ng-src="{{ sub.Poster }}" ng-show="sub.isDisplay" class="img-responsive" style="min-width:24px;min-height:48px;max-height:240px;max-width:120px;margin: 0 auto;" onload="angular.element(this).scope().vm.checkDisplay(this); " @*onerror="angular.element(this).vm.hide(this);"*@ />
+                                            </div>
+                                        </td>
+                                        <td class="col-xs-6">
+                                            <a class="row" ng-repeat="sub in y.Subs" href="#" id="item-detail-btn" data-toggle="modal" data-target="#item-detail-modal" data-ref-item="{{ sub }}">{{ y.Title }}</a>
+                                        </td>
+                                        <td class="col-xs-1">{{ y.Year }}</td>
+                                        <td class="col-xs-1">{{ y.Type }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="item-detail-modal" class="modal fade" tabindex="-1" role="dialog" ng-controller="ModalController as vm2">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <label class="modal-title" ng-show="vm2.isItemLoaded">{{ vm2.selectedItem.Title }} ({{ vm2.selectedItem.Year }})</label>
+                        <label class="modal-title" ng-hide="vm2.isItemLoaded">{{ vm2.message}}</label>
+                    </div>
+                    <div class="modal-body" ng-show="vm2.isItemLoaded">
+                        <div class="row">
+                            <div ng-class="{ 'hide': !vm2.isShowDetailPic, 'col-sm-4': vm2.isShowDetailPic }">
+                                <img ng-src="{{ vm2.selectedItem.Poster }}" style="width:100%;height:auto;" onload="angular.element(this).scope().vm2.showDetailPic(true);" onerror="angular.element(this).scope().vm2.showDetailPic(false);"/>
+                            </div>
+                            <div ng-class="{ 'col-sm-12': !vm2.isShowDetailPic, 'col-sm-8': vm2.isShowDetailPic }">
+                                @*<div class="row">*@
+                                    <table class="table table-bordered table-striped">
+                                        <tbody>
+                                            <tr>
+                                                <th class="col-sm-3">Plot:</th>
+                                                <td class="col-sm-9">{{ vm2.selectedItem.Plot }}</td>
+                                            </tr>
+                                            <tr ng-show="vm2.selectedItem.Awards">
+                                                <th>Awards:</th>
+                                                <td>{{ vm2.selectedItem.Awards }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Meta Score:</th>
+                                                <td>
+                                                    <div class="progress">
+                                                        <div class="progress-bar" role="progressbar" aria-valuenow="{{ vm2.selectedItem.Metascore }}"
+                                                             aria-valuemin="0" aria-valuemax="100" style="width:{{ vm2.selectedItem.Metascore }}%">
+                                                            {{ vm2.selectedItem.Metascore }}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Rated:</th>
+                                                <td>{{ vm2.selectedItem.Rated }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Rating:</th>
+                                                <td>
+                                                    <div class="progress">
+                                                        <div class="progress-bar" role="progressbar" aria-valuenow="{{ vm2.selectedItem.Rating }}"
+                                                             aria-valuemin="0" aria-valuemax="10" style="width:{{ vm2.selectedItem.Rating*10 }}%">
+                                                            {{ vm2.selectedItem.Rating }}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Country:</th>
+                                                <td>{{ vm2.selectedItem.Country }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Language:</th>
+                                                <td>{{ vm2.selectedItem.Language }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Price:</th>
+                                                <td>${{ vm2.selectedItem.Price }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Released:</th>
+                                                <td>{{ vm2.selectedItem.Released }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Runtime:</th>
+                                                <td>{{ vm2.selectedItem.Runtime }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Votes:</th>
+                                                <td>{{ vm2.selectedItem.Votes }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Genre:</th>
+                                                <td>
+                                                    <div class="container" ng-repeat="x in vm2.selectedItem.Genre.split(',')">
+                                                        <div class="row">
+                                                            {{ x }}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Director:</th>
+                                                <td>
+                                                    <div class="container" ng-repeat="x in vm2.selectedItem.Director.split(',')">
+                                                        <div class="row">
+                                                            {{ x }}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Actors:</th>
+                                                <td>
+                                                    <div class="container" ng-repeat="x in vm2.selectedItem.Actors.split(',')">
+                                                        <div class="row">
+                                                            {{ x }}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Writer:</th>
+                                                <td>
+                                                    <div class="container" ng-repeat="x in vm2.selectedItem.Writer.split(',')">
+                                                        <div class="row">
+                                                            {{ x }}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                @* </div> *@
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /ko -->
